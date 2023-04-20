@@ -15,9 +15,9 @@
 #define MAXSET 4  // The number of sets available - /!\ It affects the array of settings, the 
 
 int pos = 0;
-int prev_pos = 0;
+int p_pos = 0;
 int m_pos = 0;
-int eeAddress = 0; //EEPROM address to start reading from
+int ee_addr = 0; //EEPROM address to start reading from
 //***** EEPROM ************
 // Addr 0: last pos
 // Addr 1: last m_pos
@@ -102,9 +102,9 @@ void FSM_EEReset() {
   for (int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
   }
-  EEPROM.put(eeAddress, pos);
-  EEPROM.put(eeAddress+1, m_pos);
-  EEPROM.put(eeAddress+2, m_delay);
+  EEPROM.put(ee_addr, pos);
+  EEPROM.put(ee_addr+1, m_pos);
+  EEPROM.put(ee_addr+2, m_delay);
 
   delay(LOOPMS * 6);
   ledSet( false, false, false, false);
@@ -141,7 +141,7 @@ void FSM_Error() {
 // Uninterruptible Motor Turning state
 void FSM_MT() {
   int m_dir = 0;
-  int prev_mtticks = m_ticks;
+  int p_m_ticks = m_ticks;
 
   do {
     m_dir = move_motor();
@@ -154,15 +154,15 @@ void FSM_MT() {
 
     delay(LOOPMS);
 
-    if (prev_mtticks == m_ticks && m_dir != 0)
+    if (p_m_ticks == m_ticks && m_dir != 0)
       FSM_Error();
     else
-      prev_mtticks = m_ticks;
+      p_m_ticks = m_ticks;
 
   } while ( m_dir != 0 );
   m_ticks=0;
-  EEPROM.put(eeAddress+1, m_pos);
-  EEPROM.put(eeAddress+2, m_delay);
+  EEPROM.put(ee_addr+1, m_pos);
+  EEPROM.put(ee_addr+2, m_delay);
 }
 
 // the setup function runs once when you press reset or power the board
@@ -180,10 +180,10 @@ void setup() {
  
   int savedSet = 0; //Variable to store data read from EEPROM
   
-  //Get the data from the EEPROM at position 'eeAddress'
-  EEPROM.get(eeAddress, pos);
-  EEPROM.get(eeAddress+1, m_pos);
-  EEPROM.get(eeAddress+2, m_delay);
+  //Get the data from the EEPROM at position 'ee_addr'
+  EEPROM.get(ee_addr, pos);
+  EEPROM.get(ee_addr+1, m_pos);
+  EEPROM.get(ee_addr+2, m_delay);
 
   logger(" - m_pos: ");
   logger(String(m_pos));
@@ -223,10 +223,10 @@ void loop() {
   }
   
   // Update LEDs and EEPROM state
-  if ( pos != prev_pos ) { 
+  if ( pos != p_pos ) { 
     led_state(true);
-    EEPROM.put(eeAddress, pos);
-    prev_pos = pos;
+    EEPROM.put(ee_addr, pos);
+    p_pos = pos;
     m_wait = 1;
   }
 
